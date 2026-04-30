@@ -11,43 +11,59 @@
 
 import string
 
-from fastapi import Body, FastAPI
+from fastapi import Body, Depends, FastAPI
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
-app = FastAPI()
+from database import Base, engine, SessionLocal
+from models.user import User
+from schemas.user_request import UserRequest
+from sqlalchemy.orm import Session
+import models
+from passlib.context import CryptContext
 
-users= []
-class Users(BaseModel):
-    id: Optional[int] = Field()
-    username:str = Field(description="enter username", default=None)
-    emailid:EmailStr = Field(description="enter emaild", default=None)
-    password:str = Field(description="enter password", default=None)
+
+
+
+
+app = FastAPI()
+Base.metadata.create_all(bind=engine)
+users=[]
+
+# hashing the password using bcrypt
+bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
+
     
-    
-    #   title: str = Field(min_length=3)
-#     author: str = Field(min_length=1)
-#     description: str = Field(min_length=1, max_length=100)
-#     rating: int = Field(gt=0, lt=5)   
-        
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()    
+
+
 @app.get('/users')
 async def get_all_users():
+    sessionLocal =SessionLocal() 
+    print(sessionLocal)
     return users
 
 @app.post('/signup')
-async def user_signup(user:Users): 
-    user.id=get_last_userId()+1
-    
-    users.append(user)
+async def user_signup(user:UserRequest, db:SessionLocal=Depends(get_db)): 
+    hashed_password = bcrypt_context.hash(user.password)
+
+    user1 = User(username=user.username, emailid=user.emailid, password=hashed_password)
+    db.add(user1)
+    db.commit()
     return user
     
+        
 @app.get('/users/{username}')
 async def get_user_by_id(username:str): 
     for user in users:
         if user.username ==username:
            return user
         
-def get_last_userId():
-    if users:
-        return users[-1].id 
-    else:
-        return 0
+
+
+
+
