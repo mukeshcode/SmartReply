@@ -2,7 +2,7 @@ import string
 
 from fastapi import Body, Depends, APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from typing import Optional, Annotated
 from database import Base, engine, SessionLocal
 from models.user import User
 from schemas.user_request import UserRequest
@@ -12,8 +12,9 @@ import models
 from passlib.context import CryptContext
 
 from datetime import datetime, timedelta, timezone
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from jose import jwt
+from jose import jwt, JWTError
 
 # hashing the password using bcrypt
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
@@ -23,6 +24,23 @@ router = APIRouter(
     tags=['auth']
 )
     
+security = HTTPBearer()
+
+async def get_current_user(
+    credentials:Annotated[HTTPAuthorizationCredentials, Depends(security)]  # HTTPAuthorizationCredentials is the type hint
+):
+    try:
+        token = credentials.credentials  # pulls the token out of header "Authorization: Bearer <token>"
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get('username')
+
+        if username is None:
+            raise HTTPException(status_code=401, detail='Could not validate user')
+        return {'username': username}  # this is what the dependent route will receive as 'user'
+
+    except JWTError:
+        raise HTTPException(status_code=401, detail='Could not validate user')
+
 def get_db():
     db = SessionLocal()
     try:
@@ -81,5 +99,3 @@ async def get_user_by_id(username:str):
         if user.username ==username:
            return user
         
-
-

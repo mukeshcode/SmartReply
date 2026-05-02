@@ -21,49 +21,22 @@ from sqlalchemy.orm import Session
 import models
 from passlib.context import CryptContext
 
-
+from routers import auth, user_actions
+from fastapi.middleware.cors import CORSMiddleware
 
 
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['http://localhost:3000'],  # or ["*"] for all (not recommended in prod)
+    # allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 Base.metadata.create_all(bind=engine)
-users=[]
 
-# hashing the password using bcrypt
-bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
-
-    
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()    
-
-
-@app.get('/users')
-async def get_all_users():
-    sessionLocal =SessionLocal() 
-    print(sessionLocal)
-    return users
-
-@app.post('/signup')
-async def user_signup(user:UserRequest, db:SessionLocal=Depends(get_db)): 
-    hashed_password = bcrypt_context.hash(user.password)
-
-    user1 = User(username=user.username, emailid=user.emailid, password=hashed_password)
-    db.add(user1)
-    db.commit()
-    return user
-    
-        
-@app.get('/users/{username}')
-async def get_user_by_id(username:str): 
-    for user in users:
-        if user.username ==username:
-           return user
-        
-
-
-
-
+app.include_router(auth.router)
+app.include_router(user_actions.router)
