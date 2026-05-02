@@ -17,7 +17,7 @@ from typing import Optional
 from database import Base, engine, SessionLocal
 from models.user import User
 from schemas.user_request import UserRequest
-from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, Column, Integer, String, text
 import models
 from passlib.context import CryptContext
 
@@ -32,7 +32,16 @@ users=[]
 # hashing the password using bcrypt
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
+@app.get("/")
+def test_connection():
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT 1"))
+            return {"status": "connected", "result": result.scalar()}
+    except Exception as e:
+        return {"error": str(e)}
     
+       
 def get_db():
     db = SessionLocal()
     try:
@@ -44,7 +53,8 @@ def get_db():
 @app.get('/users')
 async def get_all_users():
     sessionLocal =SessionLocal() 
-    print(sessionLocal)
+    # print(sessionLocal)
+    users=sessionLocal.query(User).all()
     return users
 
 @app.post('/signup')
@@ -57,11 +67,16 @@ async def user_signup(user:UserRequest, db:SessionLocal=Depends(get_db)):
     return user
     
         
-@app.get('/users/{username}')
-async def get_user_by_id(username:str): 
-    for user in users:
-        if user.username ==username:
-           return user
+@app.get('/users/{Username}')
+async def get_user_by_id(Username:str): 
+    db=SessionLocal()
+    try:
+        user=db.query(User).filter(User.username==Username).first()
+        if not user:
+            return {"error": "no user found"}
+        return user
+    finally:
+        db.close()
         
 
 
