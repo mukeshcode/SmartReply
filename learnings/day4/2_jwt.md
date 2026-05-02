@@ -194,7 +194,8 @@ def create_access_token(username: str, user_id: int, expires_delta: timedelta):
 
 ---
 
-### Decoding a JWT (Verifying a User)
+### Decoding a JWT (Verifying a User) 
+**Edit : We are not using this way(can skip for now). Reason in the next 1_oauth2.md file**
 
 Decoding is how the server identifies and authenticates a user on every protected request.
 
