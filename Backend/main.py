@@ -21,7 +21,7 @@ from sqlalchemy import create_engine, Column, Integer, String, text
 import models
 from passlib.context import CryptContext
 
-from routers import auth, user_actions
+from routers import auth, user_actions, friends, ws
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -40,3 +40,5 @@ Base.metadata.create_all(bind=engine)
 
 app.include_router(auth.router)
 app.include_router(user_actions.router)
+app.include_router(friends.router)
+app.include_router(ws.router) 
