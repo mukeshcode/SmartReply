@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from 'next/navigation'; // add this import at top
 
 interface LoginPayload {
   username: string;
@@ -12,6 +13,8 @@ interface Errors {
 }
 
 export default function Login() {
+  // inside your component:
+  const router = useRouter();
   const [form, setForm] = useState<LoginPayload>({
     username: "",
     password: "",
@@ -48,11 +51,13 @@ export default function Login() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form), // now sends username + password
     });
-    if (res.ok){
+ 
+    if (res.ok) {
         const data = await res.json();
-        console.log("token:", data.access_token);
-        localStorage.setItem('smartreply_token', data.token)
+        localStorage.setItem('smartreply_token', data.token);
+        router.push('/dashboard');  // ← add this line
     }
+
     setLoading(false);
     setSuccess(true);
   };
