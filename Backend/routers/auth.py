@@ -49,16 +49,9 @@ def get_db():
         db.close()    
 
 
-users= []
-
-@router.get('/users')
-async def get_all_users():
-    sessionLocal =SessionLocal() 
-    print(sessionLocal)
-    return users
 
 @router.post('/signup')
-async def user_signup(user:UserRequest, db:SessionLocal=Depends(get_db)): 
+async def user_signup(user:UserRequest, db: Annotated[Session, Depends(get_db)]): 
     hashed_password = bcrypt_context.hash(user.password)
 
     user1 = User(username=user.username, emailid=user.emailid, password=hashed_password)
@@ -66,6 +59,8 @@ async def user_signup(user:UserRequest, db:SessionLocal=Depends(get_db)):
     db.commit()
     return user1
 
+# 1. Annotated
+# 2. Secret key
 
 SECRET_KEY = 'ce77039451ab2cf7539396cb53a5c0e1d42dfcd77e08eb0708e3e5c7a8b7a0cd'   # openssl rand -hex 32
 ALGORITHM = 'HS256'
@@ -79,7 +74,7 @@ def create_jwt(username: str, expiration_delta: timedelta) :
 
 
 @router.post('/login')
-async def login(login_request : LoginRequest, db:SessionLocal=Depends(get_db)):
+async def login(login_request : LoginRequest, db: Annotated[Session, Depends(get_db)]):
     # user_detail = fetch user from db
     # login_request.password verify
 
@@ -91,11 +86,3 @@ async def login(login_request : LoginRequest, db:SessionLocal=Depends(get_db)):
     bearer_token = create_jwt(res_user.username, timedelta(minutes=30))
     return {'msg' : 'login successfuly', 'token' : bearer_token}
 
-
-
-@router.get('/users/{username}')
-async def get_user_by_id(username:str): 
-    for user in users:
-        if user.username ==username:
-           return user
-        
