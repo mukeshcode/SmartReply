@@ -4,10 +4,8 @@ import {
     searchUsers,
     sendFriendRequest,
     getPendingRequests,
-    acceptFriendRequest,
-    rejectFriendRequest
-} from '../lib/api';
-
+    respondToFriendRequest
+} from '../apis/api';
 
 interface User {
     username: string;
@@ -27,11 +25,6 @@ export default function Dashboard() {
     const [showRequests, setShowRequests] = useState(false);
     const [msg, setMsg] = useState('');
 
-    // load pending requests on page load
-    useEffect(() => {
-        loadPendingRequests();
-    }, []);
-
     const loadPendingRequests = async () => {
         try {
             const data = await getPendingRequests();
@@ -40,6 +33,11 @@ export default function Dashboard() {
             console.error(err);
         }
     };
+    // load pending requests on page load
+    useEffect(() => {
+        loadPendingRequests();
+    }, []);
+
 
     const handleSearch = async () => {
         if (!searchQuery.trim()) return;
@@ -63,7 +61,7 @@ export default function Dashboard() {
 
     const handleAccept = async (request_id: number) => {
         try {
-            await acceptFriendRequest(request_id);
+            await respondToFriendRequest(request_id, "accepted");
             setMsg('Friend request accepted ✅');
             loadPendingRequests(); // refresh the list
         } catch (err) {
@@ -73,7 +71,7 @@ export default function Dashboard() {
 
     const handleReject = async (request_id: number) => {
         try {
-            await rejectFriendRequest(request_id);
+            await respondToFriendRequest(request_id, "declined");
             setMsg('Friend request rejected');
             loadPendingRequests(); // refresh the list
         } catch (err) {
@@ -81,7 +79,7 @@ export default function Dashboard() {
         }
     };
 
-    const wsRef = useRef<WebSocket | null>(null);  // add this
+    // const wsRef = useRef<WebSocket | null>(null);  // add this
 
    
     return (
