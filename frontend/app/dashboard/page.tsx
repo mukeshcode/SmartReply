@@ -5,7 +5,7 @@ import {
     sendFriendRequest,
     getPendingRequests,
     respondToFriendRequest
-} from '../lib/api';
+} from '../apis/api';
 
 interface User {
     username: string;
