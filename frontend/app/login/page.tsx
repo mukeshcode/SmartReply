@@ -62,15 +62,15 @@ export default function Login() {
     setSuccess(true);
   };
 
-  if (success) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <p className="text-green-600 text-sm font-medium animate-fade-in">
-          ✅ Logged in successfully!
-        </p>
-      </div>
-    );
-  }
+  // if (success) {
+  //   return (
+  //     <div className="flex items-center justify-center h-screen bg-gray-50">
+  //       <p className="text-green-600 text-sm font-medium animate-fade-in">
+  //         ✅ Logged in successfully!
+  //       </p>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 px-4">
