@@ -17,7 +17,7 @@ from typing import Optional
 from database import Base, engine, SessionLocal
 from models.user import User
 from schemas.user_request import UserRequest
-from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, Column, Integer, String, text
 import models
 from passlib.context import CryptContext
 
