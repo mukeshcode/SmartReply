@@ -10,6 +10,8 @@
 
 
 import string
+from dotenv import load_dotenv,dotenv_values
+load_dotenv()
 
 from fastapi import Body, Depends, FastAPI
 from pydantic import BaseModel, EmailStr, Field
@@ -23,7 +25,6 @@ from passlib.context import CryptContext
 
 from routers import auth, user_actions, friends, ws
 from fastapi.middleware.cors import CORSMiddleware
-
 
 
 app = FastAPI()
