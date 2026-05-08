@@ -67,7 +67,7 @@ export default function Dashboard() {
 
     // ── WebSocket setup ──────────────────────────────────────
     useEffect(() => {
-        if (!currentUser?.user_id) return;
+        if (!currentUser?.username) return;
 
         const wsUrl = `${BASE_URL.replace('http', 'ws')}/ws?user_name=${currentUser.username}`;
         const ws = new WebSocket(wsUrl);
@@ -98,7 +98,7 @@ export default function Dashboard() {
         ws.onerror = () => setWsConnected(false);
 
         return () => ws.close();
-    }, [currentUser?.user_id]);
+    }, [currentUser?.username]);
 
     // Auto-scroll chat to bottom
     useEffect(() => {
