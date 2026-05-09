@@ -8,7 +8,7 @@
 7.delete user (/users/{id})->delete
 """
 
-
+import os
 import string
 from dotenv import load_dotenv,dotenv_values
 load_dotenv()
@@ -31,7 +31,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['http://localhost:3000'],  # or ["*"] for all (not recommended in prod)
+    allow_origins=[os.getenv("FE_URL")],  # or ["*"] for all (not recommended in prod)
     # allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
