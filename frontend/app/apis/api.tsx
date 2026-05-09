@@ -1,6 +1,6 @@
 // lib/api.ts
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Helper to get auth token from localStorage
 const getToken = () => localStorage.getItem('smartreply_token');
@@ -10,6 +10,31 @@ const authHeaders = () => ({
     'Authorization': `Bearer ${getToken()}`
 });
 
+export const signup = async (form: any) => {
+    let res = await fetch(`${BASE_URL}/auth/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    if(!res.ok){
+        throw new Error("Signup failed")
+    }
+}
+
+export const login = async (form: any) => {
+     let res = await fetch(`${BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form), // now sends username + password
+    });
+    if (res.ok) {
+        const data = await res.json();
+        return data;
+    }
+    else{
+        throw new Error("Login failed.")
+    }
+}
 // ─────────────────────────────────────────
 // SEARCH USERS
 // GET /friends/search?username=query

@@ -31,7 +31,7 @@ interface Message {
     time: string;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Decode JWT to get username
 const decodeToken = (): { username: string } | null => {
