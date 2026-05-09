@@ -1,4 +1,3 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import {
@@ -8,6 +7,7 @@ import {
     respondToFriendRequest,
     fetchMyFriends
 } from '../apis/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 interface User {
     username: string;
