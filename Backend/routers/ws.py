@@ -5,9 +5,6 @@ import json
 
 router = APIRouter()
 
-SECRET_KEY = 'ce77039451ab2cf7539396cb53a5c0e1d42dfcd77e08eb0708e3e5c7a8b7a0cd'
-ALGORITHM = 'HS256'
-
 @router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-
+import { signup } from "../apis/api";
 interface SignupPayload {
   username: string;
   emailid: string;
@@ -44,22 +44,18 @@ export default function Signup() {
   const handleSubmit = async () => {
     if (!validate()) return;
     setLoading(true);
-
-    let res = await fetch("http://localhost:8000/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    console.log("res", res)
-    if (res.ok) {
+    try{
+      await signup(form);
       router.push("/login");
-      return; // stop execution here
-    } else {
-      console.error("Signup failed");
+      setSuccess(true);
     }
-
-    setLoading(false);
-    setSuccess(true);
+    catch(e){
+      console.error(e);
+    }
+    finally{
+      setLoading(false);
+    }
+ 
   };
 
   if (success) {

@@ -1,4 +1,7 @@
 
-export default function Banana(){
-  return <div className="text-[red] text-xl">SmartReply</div>
+import Signup from "./signup/page";
+export default function (){
+  return(
+  <Signup></Signup>
+  )
 }

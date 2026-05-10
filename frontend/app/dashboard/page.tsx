@@ -7,6 +7,7 @@ import {
     respondToFriendRequest,
     fetchMyFriends
 } from '../apis/api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 interface User {
     username: string;
@@ -31,7 +32,6 @@ interface Message {
     time: string;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Decode JWT to get username
 const decodeToken = (): { username: string } | null => {

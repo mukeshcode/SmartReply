@@ -1,5 +1,5 @@
 import string
-
+import os
 from fastapi import Body, Depends, APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, Annotated
@@ -10,7 +10,6 @@ from schemas.login_request import LoginRequest
 from sqlalchemy.orm import Session
 import models
 from passlib.context import CryptContext
-
 from datetime import datetime, timedelta, timezone
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
@@ -62,7 +61,7 @@ async def user_signup(user:UserRequest, db: Annotated[Session, Depends(get_db)])
 # 1. Annotated
 # 2. Secret key
 
-SECRET_KEY = 'ce77039451ab2cf7539396cb53a5c0e1d42dfcd77e08eb0708e3e5c7a8b7a0cd'   # openssl rand -hex 32
+SECRET_KEY=os.getenv("SECRET_KEY")
 ALGORITHM = 'HS256'
 
 def create_jwt(username: str, expiration_delta: timedelta) :

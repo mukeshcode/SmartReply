@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from 'next/navigation'; // add this import at top
+import {login} from '../apis/api'
 
 interface LoginPayload {
   username: string;
@@ -45,21 +46,19 @@ export default function Login() {
   const handleSubmit = async () => {
     if (!validate()) return;
     setLoading(true);
-
-    let res = await fetch("http://localhost:8000/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form), // now sends username + password
-    });
- 
-    if (res.ok) {
-        const data = await res.json();
-        localStorage.setItem('smartreply_token', data.token);
-        router.push('/dashboard');  // ← add this line
+    try{
+      const data=await login(form);
+      localStorage.setItem('smartreply_token', data.token);
+      router.push('/dashboard');  // ← add this line
+      setSuccess(true);
+    }
+    catch(e){
+      console.log(e)
+    }
+    finally{
+      setLoading(false);
     }
 
-    setLoading(false);
-    setSuccess(true);
   };
 
   // if (success) {
