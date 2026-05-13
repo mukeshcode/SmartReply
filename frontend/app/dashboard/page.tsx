@@ -200,7 +200,12 @@ export default function Dashboard() {
                 {/* Top bar */}
                 <div className="flex justify-between items-center">
                     <h1 className="text-2xl font-semibold text-gray-800">SmartReply</h1>
-
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-black text-white text-sm font-medium flex items-center justify-center">
+                            {currentUser?.username?.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="text-sm text-gray-700 font-medium">{currentUser?.username}</span>
+                    </div>
                     {/* WS status dot */}
                     <div className="flex items-center gap-3">
                         <span className="flex items-center gap-1.5 text-xs text-gray-400">
