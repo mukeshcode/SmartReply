@@ -1,11 +1,13 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from "next/navigation";
 import {
     searchUsers,
     sendFriendRequest,
     getPendingRequests,
     respondToFriendRequest,
-    fetchMyFriends
+    fetchMyFriends,
+    logout
 } from '../apis/api';
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
 
@@ -48,6 +50,7 @@ const decodeToken = (): { username: string } | null => {
 };
 
 export default function Dashboard() {
+    const router = useRouter()
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<User[]>([]);
     const [pendingRequests, setPendingRequests] = useState<FriendRequest[]>([]);
@@ -191,253 +194,322 @@ export default function Dashboard() {
     const activeFriendName = activeFriend ? getFriendName(activeFriend) : null;
     const activeMessages = activeFriendName ? (messages[activeFriendName] || []) : [];
 
+    async function handleLogout() {
+        try {
+            const username = currentUser?.username ?? ""
+            const res = await logout(username)
+            router.push('/login')
+        }
+        catch(e){
+            console.log(`Exception raised while logging out : `)
+        }
+    }
+
+    const [showUserMenu, setShowUserMenu] = useState(false);
+    const [showMobilePanel, setShowMobilePanel] = useState<'list' | 'chat'>('list');
+    const userMenuRef = useRef<HTMLDivElement>(null);
+    // Close dropdown on outside click
+    useEffect(() => {
+        <div ref = {userMenuRef}>
+            sdfsdfsd
+        </div>
+        const handleClickOutside = (e : MouseEvent) => {
+            console.log(e.target) 
+            if (userMenuRef.current && ! userMenuRef.current.contains(e.target as Node)) {
+                setShowUserMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-6 flex gap-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-3 md:p-6 flex flex-col md:flex-row gap-4 md:gap-6">
 
-            {/* ── LEFT PANEL ── */}
-            <div className="flex flex-col gap-6 w-full max-w-md flex-shrink-0">
+        {/* ── LEFT PANEL ── */}
+        <div className={`flex flex-col gap-4 md:gap-6 w-full md:max-w-md md:flex-shrink-0
+            ${activeFriend && 'hidden md:flex'}`}>
 
-                {/* Top bar */}
-                <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-semibold text-gray-800">SmartReply</h1>
+            {/* Top bar */}
+            <div className="flex justify-between items-center">
+                <h1 className="text-xl md:text-2xl font-semibold text-gray-800">SmartReply</h1>
 
+                <div className="flex items-center gap-2 md:gap-3">
                     {/* WS status dot */}
-                    <div className="flex items-center gap-3">
-                        <span className="flex items-center gap-1.5 text-xs text-gray-400">
-                            <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-400' : 'bg-gray-300'}`} />
-                            {wsConnected ? 'Connected' : 'Offline'}
-                        </span>
+                    <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                        <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-400' : 'bg-gray-300'}`} />
+                        <span className="hidden sm:inline">{wsConnected ? 'Connected' : 'Offline'}</span>
+                    </span>
 
-                        {/* Notification Bell */}
-                        <div className="relative">
-                            <button onClick={() => setShowRequests(!showRequests)} className="text-2xl relative">
-                                🔔
-                                {pendingRequests.length > 0 && (
-                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white
-                                    text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                                        {pendingRequests.length}
-                                    </span>
-                                )}
-                            </button>
-
-                            {showRequests && (
-                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl
-                                shadow-xl border border-gray-100 z-10 p-4">
-                                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Friend Requests</h3>
-                                    {pendingRequests.length === 0 ? (
-                                        <p className="text-xs text-gray-400">No pending requests</p>
-                                    ) : (
-                                        pendingRequests.map((req) => (
-                                            <div key={req.request_id} className="flex items-center justify-between mb-3">
-                                                <span className="text-sm text-gray-700">{req.from}</span>
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => handleAccept(req.request_id)}
-                                                        className="text-xs bg-black text-white px-2 py-1 rounded-lg hover:bg-gray-800">
-                                                        Accept
-                                                    </button>
-                                                    <button onClick={() => handleReject(req.request_id)}
-                                                        className="text-xs border border-gray-300 px-2 py-1 rounded-lg hover:bg-gray-50">
-                                                        Reject
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
+                    {/* Notification Bell */}
+                    <div className="relative">
+                        <button onClick={() => setShowRequests(!showRequests)} className="text-xl relative">
+                            🔔
+                            {pendingRequests.length > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-red-500 text-white
+                                text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                                    {pendingRequests.length}
+                                </span>
                             )}
-                        </div>
-                    </div>
-                </div>
-
-                {msg && <p className="text-sm text-green-600">{msg}</p>}
-
-                {/* Search */}
-                <div className="bg-white/70 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-gray-200">
-                    <h2 className="text-sm font-medium text-gray-600 mb-3">Search Users</h2>
-                    <div className="flex gap-2">
-                        <input
-                            type="text"
-                            placeholder="Search by username..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                            className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-300
-                            focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black bg-white/80"
-                        />
-                        <button onClick={handleSearch}
-                            className="px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-900 transition-all">
-                            Search
                         </button>
+
+                        {showRequests && (
+                            <div className="absolute right-0 mt-2 w-64 md:w-72 bg-white rounded-xl
+                            shadow-xl border border-gray-100 z-10 p-4">
+                                <h3 className="text-sm font-semibold text-gray-700 mb-3">Friend Requests</h3>
+                                {pendingRequests.length === 0 ? (
+                                    <p className="text-xs text-gray-400">No pending requests</p>
+                                ) : (
+                                    pendingRequests.map((req) => (
+                                        <div key={req.request_id} className="flex items-center justify-between mb-3">
+                                            <span className="text-sm text-gray-700">{req.from}</span>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => handleAccept(req.request_id)}
+                                                    className="text-xs bg-black text-white px-2 py-1 rounded-lg hover:bg-gray-800">
+                                                    Accept
+                                                </button>
+                                                <button onClick={() => handleReject(req.request_id)}
+                                                    className="text-xs border border-gray-300 px-2 py-1 rounded-lg hover:bg-gray-50">
+                                                    Reject
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        )}
                     </div>
-                    <div className="mt-4 space-y-2">
-                        {searchResults.map((user) => (
-                            <div key={user.username}
-                                className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-800">{user.username}</p>
-                                    <p className="text-xs text-gray-400">{user.emailid}</p>
+
+                    {/* Avatar + dropdown */}
+                    <div className="relative" ref={userMenuRef}>
+                        <button
+                            onClick={() => setShowUserMenu(!showUserMenu)}
+                            className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-black/20"
+                        >
+                            <div className="w-8 h-8 rounded-full bg-black text-white text-sm font-medium flex items-center justify-center select-none">
+                                {currentUser?.username?.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="hidden sm:inline text-sm text-gray-700 font-medium">
+                                {currentUser?.username}
+                            </span>
+                        </button>
+
+                        {showUserMenu && (
+                            <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-xl border border-gray-100 z-20 overflow-hidden">
+                                <div className="px-4 py-3 border-b border-gray-100">
+                                    <p className="text-xs text-gray-400">Signed in as</p>
+                                    <p className="text-sm font-medium text-gray-800 truncate">{currentUser?.username}</p>
                                 </div>
-                                <button onClick={() => handleSendRequest(user.username)}
-                                    className="text-xs bg-black text-white px-3 py-1 rounded-lg hover:bg-gray-800 transition-all">
-                                    Add +
+                                <button
+                                    onClick={() => { setShowUserMenu(false); handleLogout(); }}
+                                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                >
+                                    Log out
                                 </button>
                             </div>
-                        ))}
+                        )}
                     </div>
-                </div>
-
-                {/* Friends List */}
-                <div className="bg-white/70 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-gray-200">
-                    <div className="flex items-center justify-between mb-3">
-                        <h2 className="text-sm font-medium text-gray-600">My Friends</h2>
-                        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                            {friends.length}
-                        </span>
-                    </div>
-                    {friends.length === 0 ? (
-                        <p className="text-xs text-gray-400 text-center py-4">
-                            No friends yet — search and add someone!
-                        </p>
-                    ) : (
-                        <div className="space-y-2">
-                            {friends.map((friend, idx) => {
-                                const name = getFriendName(friend);
-                                const isActive = activeFriendName === name;
-                                const unread = (messages[name] || []).filter(m => m.from === 'them').length;
-                                return (
-                                    <button
-                                        key={idx}
-                                        onClick={() => setActiveFriend(friend)}
-                                        className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left
-                                            ${isActive
-                                                ? 'bg-black text-white border-black'
-                                                : 'bg-gray-50 border-gray-100 hover:border-gray-300 hover:bg-gray-100'}`}
-                                    >
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center 
-                                            text-sm font-medium shrink-0
-                                            ${isActive ? 'bg-white text-black' : 'bg-black text-white'}`}>
-                                            {name.charAt(0).toUpperCase()}
-                                        </div>
-                                        <p className={`text-sm font-medium flex-1 ${isActive ? 'text-white' : 'text-gray-800'}`}>
-                                            {name}
-                                        </p>
-                                        {unread > 0 && !isActive && (
-                                            <span className="w-5 h-5 bg-black text-white text-xs rounded-full flex items-center justify-center">
-                                                {unread}
-                                            </span>
-                                        )}
-                                        <span className={`text-xs ${isActive ? 'text-gray-300' : 'text-gray-400'}`}>
-                                            💬
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
                 </div>
             </div>
 
-            {/* ── RIGHT PANEL: CHAT WINDOW ── */}
-            <div className="flex-1 flex flex-col min-h-[calc(100vh-3rem)]">
-                {activeFriend ? (
-                    <div className="flex flex-col h-full bg-white/70 backdrop-blur-lg
-                        rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            {msg && <p className="text-sm text-green-600">{msg}</p>}
 
-                        {/* Chat Header */}
-                        <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 bg-white/80">
-                            <div className="w-9 h-9 rounded-full bg-black text-white flex items-center
-                                justify-center text-sm font-semibold shrink-0">
-                                {activeFriendName?.charAt(0).toUpperCase()}
+            {/* Search */}
+            <div className="bg-white/70 backdrop-blur-lg rounded-2xl p-4 md:p-6 shadow-xl border border-gray-200">
+                <h2 className="text-sm font-medium text-gray-600 mb-3">Search Users</h2>
+                <div className="flex gap-2">
+                    <input
+                        type="text"
+                        placeholder="Search by username..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                        className="flex-1 px-3 py-2 text-sm rounded-lg border border-gray-300
+                        focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black bg-white/80"
+                    />
+                    <button onClick={handleSearch}
+                        className="px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-900 transition-all">
+                        Search
+                    </button>
+                </div>
+                <div className="mt-4 space-y-2">
+                    {searchResults.map((user) => (
+                        <div key={user.username}
+                            className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100">
+                            <div className="min-w-0 mr-2">
+                                <p className="text-sm font-medium text-gray-800 truncate">{user.username}</p>
+                                <p className="text-xs text-gray-400 truncate">{user.emailid}</p>
                             </div>
-                            <div className="flex-1">
-                                <p className="text-sm font-semibold text-gray-800">{activeFriendName}</p>
-                                <p className="text-xs text-gray-400">
-                                    {wsConnected ? '● Online' : '○ Offline'}
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setActiveFriend(null)}
-                                className="text-gray-400 hover:text-gray-700 text-lg leading-none"
-                                title="Close chat"
-                            >
-                                ✕
+                            <button onClick={() => handleSendRequest(user.username)}
+                                className="text-xs bg-black text-white px-3 py-1 rounded-lg hover:bg-gray-800 transition-all shrink-0">
+                                Add +
                             </button>
                         </div>
+                    ))}
+                </div>
+            </div>
 
-                        {/* Messages Area */}
-                        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-gradient-to-b from-white/40 to-gray-50/60">
-                            {activeMessages.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-full text-center gap-2">
-                                    <span className="text-4xl">💬</span>
-                                    <p className="text-sm text-gray-400">
-                                        No messages yet. Say hi to <strong>{activeFriendName}</strong>!
-                                    </p>
-                                </div>
-                            ) : (
-                                activeMessages.map((m, idx) => (
-                                    <div key={idx} className={`flex ${m.from === 'me' ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`max-w-[70%] group`}>
-                                            <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed
-                                                ${m.from === 'me'
-                                                    ? 'bg-black text-white rounded-br-sm'
-                                                    : 'bg-white text-gray-800 border border-gray-100 rounded-bl-sm shadow-sm'}`}>
-                                                {m.text}
-                                            </div>
-                                            <p className={`text-[10px] text-gray-400 mt-1
-                                                ${m.from === 'me' ? 'text-right' : 'text-left'}`}>
-                                                {m.time}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                            <div ref={messagesEndRef} />
-                        </div>
-
-                        {/* Input Bar */}
-                        <div className="px-4 py-3 border-t border-gray-100 bg-white/80 flex gap-2 items-end">
-                            <input
-                                type="text"
-                                placeholder={`Message ${activeFriendName}...`}
-                                value={chatInput}
-                                onChange={(e) => setChatInput(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleSendMessage();
-                                    }
-                                }}
-                                className="flex-1 px-4 py-2.5 text-sm rounded-xl border border-gray-200
-                                focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black
-                                bg-gray-50 resize-none"
-                            />
-                            <button
-                                onClick={handleSendMessage}
-                                disabled={!wsConnected || !chatInput.trim()}
-                                className="px-4 py-2.5 bg-black text-white text-sm rounded-xl
-                                hover:bg-gray-800 transition-all disabled:opacity-40
-                                disabled:cursor-not-allowed flex items-center gap-1.5 shrink-0"
-                            >
-                                <span>Send</span>
-                                <span className="text-base">↑</span>
-                            </button>
-                        </div>
-                    </div>
+            {/* Friends List */}
+            <div className="bg-white/70 backdrop-blur-lg rounded-2xl p-4 md:p-6 shadow-xl border border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-medium text-gray-600">My Friends</h2>
+                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
+                        {friends.length}
+                    </span>
+                </div>
+                {friends.length === 0 ? (
+                    <p className="text-xs text-gray-400 text-center py-4">
+                        No friends yet — search and add someone!
+                    </p>
                 ) : (
-                    /* Empty state when no chat is open */
-                    <div className="flex-1 flex flex-col items-center justify-center gap-4
-                        bg-white/40 backdrop-blur-sm rounded-2xl border border-gray-200/60
-                        border-dashed text-center px-8">
-                        <div className="text-5xl opacity-30">💬</div>
-                        <div>
-                            <p className="text-sm font-medium text-gray-500">No conversation open</p>
-                            <p className="text-xs text-gray-400 mt-1">
-                                Click a friend from the list to start chatting
-                            </p>
-                        </div>
+                    <div className="space-y-2">
+                        {friends.map((friend, idx) => {
+                            const name = getFriendName(friend);
+                            const isActive = activeFriendName === name;
+                            const unread = (messages[name] || []).filter(m => m.from === 'them').length;
+                            return (
+                                <button
+                                    key={idx}
+                                    onClick={() => { setActiveFriend(friend); setShowMobilePanel('chat'); }}
+                                    className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left
+                                        ${isActive
+                                            ? 'bg-black text-white border-black'
+                                            : 'bg-gray-50 border-gray-100 hover:border-gray-300 hover:bg-gray-100'}`}
+                                >
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center 
+                                        text-sm font-medium shrink-0
+                                        ${isActive ? 'bg-white text-black' : 'bg-black text-white'}`}>
+                                        {name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <p className={`text-sm font-medium flex-1 truncate ${isActive ? 'text-white' : 'text-gray-800'}`}>
+                                        {name}
+                                    </p>
+                                    {unread > 0 && !isActive && (
+                                        <span className="w-5 h-5 bg-black text-white text-xs rounded-full flex items-center justify-center shrink-0">
+                                            {unread}
+                                        </span>
+                                    )}
+                                    <span className={`text-xs shrink-0 ${isActive ? 'text-gray-300' : 'text-gray-400'}`}>
+                                        💬
+                                    </span>
+                                </button>
+                            );
+                        })}
                     </div>
                 )}
             </div>
         </div>
+
+        {/* ── RIGHT PANEL: CHAT WINDOW ── */}
+        <div className={`flex-1 flex flex-col min-h-[calc(100vh-3rem)]
+            ${!activeFriend && 'hidden md:flex'}`}>
+            {activeFriend ? (
+                <div className="flex flex-col h-full bg-white/70 backdrop-blur-lg
+                    rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+
+                    {/* Chat Header */}
+                    <div className="flex items-center gap-3 px-4 md:px-5 py-3 md:py-4 border-b border-gray-100 bg-white/80">
+                        {/* Back button — mobile only */}
+                        <button
+                            onClick={() => { setActiveFriend(null); setShowMobilePanel('list'); }}
+                            className="md:hidden text-gray-500 hover:text-gray-800 mr-1"
+                            title="Back"
+                        >
+                            ←
+                        </button>
+                        <div className="w-9 h-9 rounded-full bg-black text-white flex items-center
+                            justify-center text-sm font-semibold shrink-0">
+                            {activeFriendName?.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-800 truncate">{activeFriendName}</p>
+                            <p className="text-xs text-gray-400">
+                                {wsConnected ? '● Online' : '○ Offline'}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => { setActiveFriend(null); setShowMobilePanel('list'); }}
+                            className="hidden md:block text-gray-400 hover:text-gray-700 text-lg leading-none"
+                            title="Close chat"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    {/* Messages Area */}
+                    <div className="flex-1 overflow-y-auto px-4 md:px-5 py-4 space-y-3 bg-gradient-to-b from-white/40 to-gray-50/60">
+                        {activeMessages.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-full text-center gap-2">
+                                <span className="text-4xl">💬</span>
+                                <p className="text-sm text-gray-400">
+                                    No messages yet. Say hi to <strong>{activeFriendName}</strong>!
+                                </p>
+                            </div>
+                        ) : (
+                            activeMessages.map((m, idx) => (
+                                <div key={idx} className={`flex ${m.from === 'me' ? 'justify-end' : 'justify-start'}`}>
+                                    <div className="max-w-[80%] md:max-w-[70%] group">
+                                        <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed
+                                            ${m.from === 'me'
+                                                ? 'bg-black text-white rounded-br-sm'
+                                                : 'bg-white text-gray-800 border border-gray-100 rounded-bl-sm shadow-sm'}`}>
+                                            {m.text}
+                                        </div>
+                                        <p className={`text-[10px] text-gray-400 mt-1
+                                            ${m.from === 'me' ? 'text-right' : 'text-left'}`}>
+                                            {m.time}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                        <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Input Bar */}
+                    <div className="px-3 md:px-4 py-3 border-t border-gray-100 bg-white/80 flex gap-2 items-end">
+                        <input
+                            type="text"
+                            placeholder={`Message ${activeFriendName}...`}
+                            value={chatInput}
+                            onChange={(e) => setChatInput(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSendMessage();
+                                }
+                            }}
+                            className="flex-1 px-4 py-2.5 text-sm rounded-xl border border-gray-200
+                            focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black
+                            bg-gray-50 resize-none"
+                        />
+                        <button
+                            onClick={handleSendMessage}
+                            disabled={!wsConnected || !chatInput.trim()}
+                            className="px-4 py-2.5 bg-black text-white text-sm rounded-xl
+                            hover:bg-gray-800 transition-all disabled:opacity-40
+                            disabled:cursor-not-allowed flex items-center gap-1.5 shrink-0"
+                        >
+                            <span>Send</span>
+                            <span className="text-base">↑</span>
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <div className="flex-1 flex flex-col items-center justify-center gap-4
+                    bg-white/40 backdrop-blur-sm rounded-2xl border border-gray-200/60
+                    border-dashed text-center px-8">
+                    <div className="text-5xl opacity-30">💬</div>
+                    <div>
+                        <p className="text-sm font-medium text-gray-500">No conversation open</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                            Click a friend from the list to start chatting
+                        </p>
+                    </div>
+                </div>
+            )}
+        </div>
+    </div>
     );
 }

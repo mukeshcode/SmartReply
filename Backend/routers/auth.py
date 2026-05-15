@@ -1,6 +1,6 @@
 import string
 import os
-from fastapi import Body, Depends, APIRouter, HTTPException
+from fastapi import Body, Depends, APIRouter, HTTPException, Query
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, Annotated
 from database import Base, engine, SessionLocal
@@ -14,6 +14,8 @@ from datetime import datetime, timedelta, timezone
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from jose import jwt, JWTError
+from utils.blacklisted_jwt import blacklisted_jwts
+
 
 # hashing the password using bcrypt
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
@@ -30,7 +32,12 @@ async def get_current_user(
 ):
     try:
         token = credentials.credentials  # pulls the token out of header "Authorization: Bearer <token>"
+        
+        if token in blacklisted_jwts : 
+            raise HTTPException(status_code=401, detail='User has already logged out !')
+
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        
         username: str = payload.get('username')
 
         if username is None:
@@ -39,6 +46,15 @@ async def get_current_user(
 
     except JWTError:
         raise HTTPException(status_code=401, detail='Could not validate user')
+
+
+async def get_jwt(
+    credentials:Annotated[HTTPAuthorizationCredentials, Depends(security)]  # HTTPAuthorizationCredentials is the type hint
+) -> str:
+    jwt_token = credentials.credentials
+    payload = jwt.decode(jwt_token, SECRET_KEY, algorithms=[ALGORITHM])
+    username: str = payload.get('username')
+    return {'jwt_token' : jwt_token, 'username' : username}
 
 def get_db():
     db = SessionLocal()
@@ -84,4 +100,14 @@ async def login(login_request : LoginRequest, db: Annotated[Session, Depends(get
 
     bearer_token = create_jwt(res_user.username, timedelta(minutes=30))
     return {'msg' : 'login successfuly', 'token' : bearer_token}
+
+
+
+@router.get('/logout')
+async def logout(jwt_data: Annotated[str, Depends(get_jwt)]):
+    username = jwt_data.get('username')
+    token = jwt_data.get('jwt_token')
+    print(f"{username} logged out !")
+    blacklisted_jwts.add(token)
+    return {'msg' : 'Logged out Successfully !'}
 
