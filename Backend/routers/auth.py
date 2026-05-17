@@ -12,7 +12,7 @@ import models
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
+from core.ws_manager import manager
 from jose import jwt, JWTError
 from utils.blacklisted_jwt import blacklisted_jwts
 
@@ -79,7 +79,7 @@ async def user_signup(user:UserRequest, db: Annotated[Session, Depends(get_db)])
 
 SECRET_KEY=os.getenv("SECRET_KEY")
 ALGORITHM = 'HS256'
-
+Max_connection=2
 def create_jwt(username: str, expiration_delta: timedelta) :
     payload = {'username' : username, 'role' : 'admin'} 
     expires = datetime.now(timezone.utc) + expiration_delta
@@ -92,12 +92,12 @@ def create_jwt(username: str, expiration_delta: timedelta) :
 async def login(login_request : LoginRequest, db: Annotated[Session, Depends(get_db)]):
     # user_detail = fetch user from db
     # login_request.password verify
-
     res_user = db.query(User).filter(User.username == login_request.username).first() 
 
     if not bcrypt_context.verify(login_request.password, res_user.password):
         raise HTTPException(status_code=401, detail="Username or Password not correct")
-
+    if len(manager.active_connections.get(login_request.username,[]))>=Max_connection:
+        raise HTTPException(status_code=403, detail="already have 2 connections")
     bearer_token = create_jwt(res_user.username, timedelta(minutes=30))
     return {'msg' : 'login successfuly', 'token' : bearer_token}
 
