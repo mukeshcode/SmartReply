@@ -82,16 +82,27 @@ export default function Dashboard() {
             try {
                 const data = JSON.parse(event.data);
                 // Incoming message format: { from: sender_username, message: "..." }
+                console.log("line85",data)
                 const senderKey = data.from || 'unknown';
+                console.log(senderKey);
+                const receiverKey=data.to ||'unknown';
+                console.log(receiverKey);
+                const current_user=currentUser?.username
                 const newMsg: Message = {
-                    from: 'them',
+                    from: senderKey===current_user?'me':'them',
                     text: data.message || data,
                     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 };
+                senderKey===current_user?setMessages((prev) => ({
+                    ...prev,
+
+                    [receiverKey]: [...(prev[receiverKey] || []), newMsg],
+                })):
                 setMessages((prev) => ({
                     ...prev,
+
                     [senderKey]: [...(prev[senderKey] || []), newMsg],
-                }));
+                }))
             } catch {
                 // plain text fallback
             }
@@ -102,7 +113,6 @@ export default function Dashboard() {
 
         return () => ws.close();
     }, [currentUser?.username]);
-
     // Auto-scroll chat to bottom
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

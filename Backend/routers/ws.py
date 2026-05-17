@@ -39,6 +39,7 @@ async def websocket_endpoint(
                     await manager.send_to_user(
                         receiver, 
                         {
+                            "to":receiver,
                             "from": user_name,
                             "message": message
                         }, 

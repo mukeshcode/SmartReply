@@ -13,7 +13,7 @@ class ConnectionManager:
             self.active_connections[username] = [websocket]
         else :
             self.active_connections.get(username, []).append(websocket)
-
+        
         print(f"{username} connected. Online users: {list(self.active_connections)}")
 
 
@@ -30,7 +30,7 @@ class ConnectionManager:
 
     async def send_to_user(self, username: str, message: dict, sender_username, sender_ws : WebSocket):
         ws_list = self.active_connections.get(username, [])
-
+        print(self.active_connections)
         dead_connections = []
 
         for ws in ws_list : 
