@@ -5,6 +5,8 @@ import json
 
 router = APIRouter()
 
+
+
 @router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
@@ -34,12 +36,16 @@ async def websocket_endpoint(
                 receiver = payload.get("receiver_name")
                 message = payload.get("message")
                 if receiver and message:
-                    await manager.send_to_user(receiver, {
-                "from": user_name,
-                "message": message
-                     })
+                    await manager.send_to_user(
+                        receiver, 
+                        {
+                            "from": user_name,
+                            "message": message
+                        }, 
+                        user_name,
+                        websocket)
             except Exception as e:
                 print(f"Error forwarding message: {e}")
 
     except WebSocketDisconnect:
-        manager.disconnect(user_name)
+        manager.disconnect(user_name, websocket)
