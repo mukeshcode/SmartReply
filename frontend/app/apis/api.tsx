@@ -105,3 +105,19 @@ export const fetchMyFriends = async () => {
     if (!res.ok) throw new Error('Failed to fetch friends');
     return res.json();
 };
+
+
+
+export const logout = async (username: string) => {
+     let res = await fetch(`${BASE_URL}/auth/logout?username = ${username}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (res.ok) {
+        const data = await res.json();
+        return data;
+    }
+    else{
+        throw new Error("Login failed.")
+    }
+}

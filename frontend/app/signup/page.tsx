@@ -129,9 +129,11 @@ export default function Signup() {
         {/* Footer */}
         <p className="text-xs text-gray-500 text-center mt-4">
           Already have an account?{" "}
-          <span className="text-black cursor-pointer hover:underline">
+          <button
+            onClick={() => router.push("/login")}
+            className="text-black cursor-pointer hover:underline">
             Login
-          </span>
+          </button>
         </p>
       </div>
     </div>
